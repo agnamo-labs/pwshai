@@ -1,0 +1,236 @@
+{
+  "commands": [
+    {
+      "trigger": "/theme",
+      "aliases": ["theme", "/theme:set"],
+      "description": "Switch terminal appearance presets (blue, dark, matrix, neon, dracula, default)",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Invoke-SlashTheme"],
+      "category": "Appearance & Themes"
+    },
+    {
+      "trigger": "/provider",
+      "aliases": ["provider", "/ai:provider"],
+      "description": "Switch active AI provider (gemini, openai, claude, deepseek, opencode, local)",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Invoke-SlashProvider"],
+      "category": "AI & Models"
+    },
+    {
+      "trigger": "/opencode",
+      "aliases": ["opencode"],
+      "description": "Switch active AI provider to OpenCode",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Invoke-SlashProvider -Name opencode"],
+      "category": "AI & Models"
+    },
+    {
+      "trigger": "/claude",
+      "aliases": ["claude"],
+      "description": "Switch active AI provider to Claude (Anthropic)",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Invoke-SlashProvider -Name claude"],
+      "category": "AI & Models"
+    },
+    {
+      "trigger": "/chatgpt",
+      "aliases": ["chatgpt", "/openai", "openai"],
+      "description": "Switch active AI provider to OpenAI ChatGPT",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Invoke-SlashProvider -Name openai"],
+      "category": "AI & Models"
+    },
+    {
+      "trigger": "/models",
+      "aliases": ["models", "/ai:models"],
+      "description": "Display local Ollama and available AI models",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Invoke-SlashModels"],
+      "category": "AI & Models"
+    },
+    {
+      "trigger": "/keys",
+      "aliases": ["keys", "/ai:keys"],
+      "description": "Manage & test API keys (-stored, -test, -list, -add)",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Invoke-SlashKeys"],
+      "category": "AI & Models"
+    },
+    {
+      "trigger": "/gen",
+      "aliases": ["gen", "/ai-gen", "ai-gen"],
+      "description": "Generate PowerShell commands directly from natural language prompts",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Invoke-SlashGen"],
+      "category": "AI & Models"
+    },
+    {
+      "trigger": "/agy -d",
+      "aliases": ["agy -d", "/agy", "agy:danger", "/yolo", "yolo"],
+      "description": "Run Antigravity CLI with dangerously-skip-permissions enabled",
+      "command": "agy",
+      "args": ["--dangerously-skip-permissions"],
+      "category": "Antigravity & Developer Tools"
+    },
+    {
+      "trigger": "/npm -u",
+      "aliases": ["npm -u", "/npm", "npm:update"],
+      "description": "Update all global npm packages and local dependencies",
+      "command": "npm",
+      "args": ["update", "-g"],
+      "category": "Package Management"
+    },
+    {
+      "trigger": "/wing -u",
+      "aliases": ["wing -u", "/winget -u", "/wing", "/winget", "wing:update"],
+      "description": "Run Windows Package Manager (winget) upgrade all packages",
+      "command": "winget",
+      "args": ["upgrade", "--all", "--include-unknown", "--accept-source-agreements", "--accept-package-agreements"],
+      "category": "Package Management"
+    },
+    {
+      "trigger": "/pip -u",
+      "aliases": ["pip -u", "/pip", "pip:update"],
+      "description": "Upgrade pip and key CLI tools",
+      "command": "python",
+      "args": ["-m", "pip", "install", "--upgrade", "pip", "terminaltexteffects"],
+      "category": "Package Management"
+    },
+    {
+      "trigger": "/sync",
+      "aliases": ["sync", "/asana-sync"],
+      "description": "Run Asana to Supabase sync tool",
+      "command": "python",
+      "args": ["C:\\Users\\GabeMaher\\main.py"],
+      "category": "Projects"
+    },
+    {
+      "trigger": "/sync -v",
+      "aliases": ["sync -v", "/validate"],
+      "description": "Validate Asana to Supabase connections without writing data",
+      "command": "python",
+      "args": ["C:\\Users\\GabeMaher\\main.py", "--validate"],
+      "category": "Projects"
+    },
+    {
+      "trigger": "/codexx",
+      "aliases": ["codexx", "/codex"],
+      "description": "Launch Codex X Shell environment",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Invoke-SlashCodexx"],
+      "category": "Developer Tools"
+    },
+    {
+      "trigger": "/eb",
+      "aliases": ["eb", "/eternal-buckets"],
+      "description": "Launch Eternal Buckets manager",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Invoke-SlashEb"],
+      "category": "Developer Tools"
+    },
+    {
+      "trigger": "/effects",
+      "aliases": ["/texteffects", "/tte", "effects"],
+      "description": "Launch terminal text effects showcase (Python TTE & Node gradient text)",
+      "command": "node",
+      "args": ["bin/cli.js", "effects"],
+      "category": "Visuals & Text Effects"
+    },
+    {
+      "trigger": "/glitch",
+      "aliases": ["glitch", "/matrix-effect"],
+      "description": "Run hyperbolized glitch animation effect",
+      "command": "python",
+      "args": ["scripts/glitch_effect.py", "glitch"],
+      "category": "Visuals & Text Effects"
+    },
+    {
+      "trigger": "/blow",
+      "aliases": ["blow", "/gust"],
+      "description": "Animate a sudden gust of wind across terminal text",
+      "command": "node",
+      "args": ["bin/cli.js", "blow"],
+      "category": "Visuals & Text Effects"
+    },
+    {
+      "trigger": "/wave",
+      "aliases": ["wave", "/breeze"],
+      "description": "Animate shimmering breeze wave across terminal text",
+      "command": "node",
+      "args": ["bin/cli.js", "wave"],
+      "category": "Visuals & Text Effects"
+    },
+    {
+      "trigger": "/swirl",
+      "aliases": ["swirl", "/cyclone", "/vortex"],
+      "description": "Animate cyclone vortex swirl across terminal text",
+      "command": "node",
+      "args": ["bin/cli.js", "swirl"],
+      "category": "Visuals & Text Effects"
+    },
+    {
+      "trigger": "/dissolve",
+      "aliases": ["dissolve", "/scatter"],
+      "description": "Animate leaf dispersal in the wind across terminal text",
+      "command": "node",
+      "args": ["bin/cli.js", "dissolve"],
+      "category": "Visuals & Text Effects"
+    },
+    {
+      "trigger": "/ports",
+      "aliases": ["ports", "/net:ports"],
+      "description": "List active listening TCP network ports and process names",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Invoke-SlashPorts"],
+      "category": "Navigation & System"
+    },
+    {
+      "trigger": "/ip",
+      "aliases": ["ip", "/net:ip"],
+      "description": "Show local network interfaces and public IP address",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Invoke-SlashIp"],
+      "category": "Navigation & System"
+    },
+    {
+      "trigger": "/find",
+      "aliases": ["find", "/search"],
+      "description": "Quick recursive file search",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Invoke-SlashFind"],
+      "category": "Navigation & System"
+    },
+    {
+      "trigger": "/history",
+      "aliases": ["history", "/hist"],
+      "description": "Search recent command history",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Invoke-SlashHistory"],
+      "category": "Navigation & System"
+    },
+    {
+      "trigger": "/sysinfo",
+      "aliases": ["sysinfo", "/system"],
+      "description": "Display system hardware, uptime, and memory summary",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Invoke-SlashSysinfo"],
+      "category": "Navigation & System"
+    },
+    {
+      "trigger": "/doctor",
+      "aliases": ["doctor", "/check"],
+      "description": "Check system airflow, developer dependencies, and pwshai status",
+      "command": "node",
+      "args": ["bin/cli.js", "doctor"],
+      "category": "Diagnostics & Help"
+    },
+    {
+      "trigger": "/help",
+      "aliases": ["/list", "/?", "help", "list"],
+      "description": "Display this interactive slash command list and cheatsheet",
+      "command": "node",
+      "args": ["bin/cli.js", "list"],
+      "category": "Diagnostics & Help"
+    }
+  ]
+}

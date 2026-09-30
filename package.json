@@ -1,0 +1,57 @@
+{
+  "name": "pwshai",
+  "version": "1.2.0",
+  "description": "Supercharged AI-powered PowerShell typeahead, hyperbolized TerminalTextEffects glitch animations, wind theme engine, and modular slash command runner.",
+  "main": "lib/index.js",
+  "bin": {
+    "pwshai": "bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "scripts",
+    "commands.json",
+    "README.md"
+  ],
+  "scripts": {
+    "start": "node bin/cli.js install",
+    "install-suite": "node bin/cli.js install",
+    "status": "node bin/cli.js status",
+    "doctor": "node bin/cli.js doctor",
+    "list": "node bin/cli.js list",
+    "effects": "node bin/cli.js effects",
+    "blow": "node bin/cli.js blow",
+    "wave": "node bin/cli.js wave",
+    "swirl": "node bin/cli.js swirl",
+    "dissolve": "node bin/cli.js dissolve",
+    "test": "node bin/cli.js status",
+    "pub": "npm publish --access public"
+  },
+  "keywords": [
+    "pwshai",
+    "powershell",
+    "psreadline",
+    "slash-commands",
+    "typeahead",
+    "terminaltexteffects",
+    "glitch",
+    "fzf",
+    "zlocation",
+    "gemini",
+    "openai",
+    "claude",
+    "deepseek",
+    "antigravity",
+    "ai",
+    "cli"
+  ],
+  "author": "Gabe Maher",
+  "license": "MIT",
+  "dependencies": {
+    "boxen": "^7.1.1",
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "figlet": "^1.7.0",
+    "gradient-string": "^2.0.2"
+  }
+}
