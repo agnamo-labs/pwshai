@@ -46,16 +46,17 @@ function getTargetDirectories() {
             }).trim();
             if (out && fs.existsSync(out)) { dirs.add(out); }
         } catch (e) {}
-
-        try {
-            const outPwsh = execSync('pwsh.exe -NoProfile -NonInteractive -Command "Split-Path $PROFILE"', {
-                encoding: 'utf8',
-                timeout: 4000,
-                stdio: ['ignore', 'pipe', 'ignore']
-            }).trim();
-            if (outPwsh && fs.existsSync(outPwsh)) { dirs.add(outPwsh); }
-        } catch (e) {}
     }
+
+    try {
+        const pwshCmd = process.platform === 'win32' ? 'pwsh.exe' : 'pwsh';
+        const outPwsh = execSync(`${pwshCmd} -NoProfile -NonInteractive -Command "Split-Path $PROFILE"`, {
+            encoding: 'utf8',
+            timeout: 4000,
+            stdio: ['ignore', 'pipe', 'ignore']
+        }).trim();
+        if (outPwsh && fs.existsSync(outPwsh)) { dirs.add(outPwsh); }
+    } catch (e) {}
 
     return Array.from(dirs);
 }
@@ -70,7 +71,16 @@ function getTargetProfiles() {
 }
 
 function install() {
-    console.log('⚡ Installing pwshai Supercharged PowerShell AI & Slash Suite...');
+    console.clear();
+    const bgBlack = '\x1b[48;2;0;0;0m';
+    const cyan = '\x1b[36m';
+    const magenta = '\x1b[35m';
+    const white = '\x1b[97m';
+    const bold = '\x1b[1m';
+    const reset = '\x1b[0m';
+    const dim = '\x1b[2m';
+    
+    console.log(`\n${bgBlack}${bold}${magenta}[+] Installing PWSHAI Orbital Suite...${reset}\n`);
     
     const dirs = getTargetDirectories();
     const profiles = getTargetProfiles();
@@ -85,14 +95,14 @@ function install() {
             const targetScript = path.join(psDir, 'SlashCommands.ps1');
             try {
                 fs.copyFileSync(sourceScript, targetScript);
-                console.log(`✅ Synced SlashCommands.ps1 to ${targetScript}`);
+                console.log(`${bgBlack}  ${cyan}[*]${reset}${bgBlack} Synced SlashCommands.ps1 to ${cyan}${targetScript}${reset}`);
             } catch (e) {}
 
             if (fs.existsSync(sourceGlitch)) {
                 const targetGlitch = path.join(psDir, 'glitch_effect.py');
                 try {
                     fs.copyFileSync(sourceGlitch, targetGlitch);
-                    console.log(`✅ Synced glitch_effect.py to ${targetGlitch}`);
+                    console.log(`${bgBlack}  ${cyan}[*]${reset}${bgBlack} Synced glitch_effect.py to ${cyan}${targetGlitch}${reset}`);
                 } catch (e) {}
             }
         }
@@ -132,10 +142,11 @@ function install() {
 '$slashCandidates = @(\n' +
 '    (Join-Path $PSScriptRoot "SlashCommands.ps1"),\n' +
 '    (Join-Path (Split-Path $PROFILE -ErrorAction SilentlyContinue) "SlashCommands.ps1"),\n' +
-'    "$env:USERPROFILE\\powershell-profile\\SlashCommands.ps1",\n' +
-'    "$env:USERPROFILE\\OneDrive\\Documents\\PowerShell\\SlashCommands.ps1",\n' +
-'    "$env:USERPROFILE\\Documents\\PowerShell\\SlashCommands.ps1",\n' +
-'    "$env:APPDATA\\npm\\node_modules\\pwshai\\scripts\\SlashCommands.ps1"\n' +
+'    "$HOME/powershell-profile/SlashCommands.ps1",\n' +
+'    "$HOME/OneDrive/Documents/PowerShell/SlashCommands.ps1",\n' +
+'    "$HOME/Documents/PowerShell/SlashCommands.ps1",\n' +
+'    "$HOME/.config/powershell/SlashCommands.ps1",\n' +
+'    (Join-Path (if ($env:APPDATA) { $env:APPDATA } else { "$HOME/.npm-global/lib" }) "npm/node_modules/pwshai/scripts/SlashCommands.ps1")\n' +
 ')\n' +
 'foreach ($sc in $slashCandidates) {\n' +
 '    if ($sc -and (Test-Path $sc)) {\n' +
@@ -191,38 +202,63 @@ function install() {
 
             try {
                 fs.appendFileSync(profilePath, configBlock);
-                console.log(`✅ Appended pwshai configuration to ${profilePath}`);
+                console.log(`${bgBlack}  ${cyan}[*]${reset}${bgBlack} Appended configuration to ${cyan}${profilePath}${reset}`);
             } catch (e) {
-                console.warn(`⚠️ Could not append to ${profilePath}: ${e.message}`);
+                console.warn(`${bgBlack}  ${magenta}[!]${reset}${bgBlack} Could not append to ${profilePath}: ${e.message}${reset}`);
             }
         } else {
-            console.log(`ℹ️ Profile ${profilePath} already configured.`);
+            console.log(`${bgBlack}  ${dim}[-] Profile ${profilePath} already configured.${reset}`);
         }
     });
 
-    console.log('\n🎉 Installation complete! Restart PowerShell or run `. $PROFILE` to activate pwshai.');
+    console.log(`\n${bgBlack}${bold}${cyan}[=] Installation complete!${reset}${bgBlack} Restart PowerShell or run ${bold}${cyan}. $PROFILE${reset}${bgBlack} to activate.\n${reset}`);
 }
 
 function status() {
-    console.log('=== pwshai Profile Status ===');
+    console.clear();
+    const bgBlack = '\x1b[48;2;0;0;0m';
+    const cyan = '\x1b[36m';
+    const magenta = '\x1b[35m';
+    const white = '\x1b[97m';
+    const bold = '\x1b[1m';
+    const reset = '\x1b[0m';
+    const dim = '\x1b[2m';
+
+    console.log(`\n${bgBlack}${bold}${magenta}┌─── PWSHAI PROFILE STATUS ─────────────┐${reset}`);
     const profiles = getTargetProfiles();
-    profiles.forEach(p => {
-        console.log(`Profile: ${p} (Exists: ${fs.existsSync(p)})`);
+    profiles.forEach((p, idx) => {
+        const exists = fs.existsSync(p);
+        const icon = exists ? `${cyan}[*]${reset}` : `${magenta}[!]${reset}`;
+        const existText = exists ? `${cyan}Installed${reset}` : `${magenta}Not found${reset}`;
+        console.log(`${bgBlack}${magenta}│${reset}${bgBlack} ${icon} ${bold}Profile ${idx + 1}:${reset}${bgBlack} ${existText}`);
+        console.log(`${bgBlack}${magenta}│${reset}${bgBlack}   ${dim}${p}${reset}`);
+        if (idx < profiles.length - 1) console.log(`${bgBlack}${magenta}│${reset}`);
     });
+    console.log(`${bgBlack}${bold}${magenta}└───────────────────────────────────────┘${reset}\n`);
 }
 
 function doctor() {
+    console.clear();
     if (doctorLib && doctorLib.runDoctor) {
         doctorLib.runDoctor();
     } else {
-        console.log('=== pwshai Doctor Diagnostics ===');
+        const bgBlack = '\x1b[48;2;0;0;0m';
+        const cyan = '\x1b[36m';
+        const magenta = '\x1b[35m';
+        const white = '\x1b[97m';
+        const bold = '\x1b[1m';
+        const reset = '\x1b[0m';
+        const dim = '\x1b[2m';
+
+        console.log(`\n${bgBlack}${bold}${magenta}┌─── PWSHAI SYSTEM DIAGNOSTICS ─────────┐${reset}`);
         status();
-        console.log('\nNode.js Version:', process.version);
-        console.log('Platform:', process.platform, process.arch);
+        console.log(`${bgBlack}${magenta}│${reset}${bgBlack} ${cyan}Node.js Version:${reset} ${white}${process.version}${reset}`);
+        console.log(`${bgBlack}${magenta}│${reset}${bgBlack} ${cyan}Platform:${reset}        ${white}${process.platform} ${process.arch}${reset}`);
         try {
             const psVer = execSync('powershell.exe -NoProfile -Command "$PSVersionTable.PSVersion.ToString()"', { encoding: 'utf8' }).trim();
-            console.log('PowerShell Version:', psVer);
+            console.log(`${bgBlack}${magenta}│${reset}${bgBlack} ${cyan}PowerShell:${reset}      ${white}${psVer}${reset}`);
         } catch (e) {}
+        console.log(`${bgBlack}${bold}${magenta}└───────────────────────────────────────┘${reset}\n`);
     }
 }
 
@@ -241,32 +277,183 @@ function loadRegisteredCommands() {
 }
 
 function printHelpMenu() {
+    console.clear();
     const commands = loadRegisteredCommands();
-    console.log('\n⚡ ============================================================');
-    console.log('       PWSHAI SUPERCHARGED SLASH COMMANDS & AI RUNNER        ');
-    console.log('============================================================\n');
-    console.log('  Usage:');
-    console.log('    pwshai install        - Install & configure PowerShell profiles');
-    console.log('    pwshai status         - Display active PowerShell profile status');
-    console.log('    pwshai doctor         - Run complete diagnostics check');
-    console.log('    pwshai list           - Display this interactive cheatsheet');
-    console.log('    pwshai effects        - Launch terminal text effects showcase');
-    console.log('    pwshai blow <text>    - Animate wind gust over text');
-    console.log('    pwshai wave <text>    - Animate breeze wave over text');
-    console.log('    pwshai swirl <text>   - Animate vortex cyclone swirl');
-    console.log('    pwshai dissolve <txt> - Animate leaf dispersal in wind');
-    console.log('    pwshai /<command>     - Execute any registered slash shortcut\n');
+    const bgBlack = '\x1b[48;2;0;0;0m';
+    const cyan = '\x1b[36m';
+    const magenta = '\x1b[35m';
+    const white = '\x1b[97m';
+    const bold = '\x1b[1m';
+    const dim = '\x1b[2m';
+    const reset = '\x1b[0m';
 
-    console.log('  Registered Triggers:');
+    console.log(`${bgBlack}${bold}${magenta}┌────────────────────────────────────────────────────────────┐${reset}`);
+    console.log(`${bgBlack}${bold}${cyan}│      PWSHAI COMMAND TERMINAL : ORBITAL CONTROL             │${reset}`);
+    console.log(`${bgBlack}${bold}${magenta}└────────────────────────────────────────────────────────────┘${reset}\n`);
+    
+    console.log(`${bgBlack}${bold}${white}[ CORE COMMANDS ]${reset}`);
+    console.log(`${bgBlack}  ${cyan}pwshai install${reset}${bgBlack}        - Install & configure PowerShell profiles${reset}`);
+    console.log(`${bgBlack}  ${cyan}pwshai status${reset}${bgBlack}         - Display active PowerShell profile status${reset}`);
+    console.log(`${bgBlack}  ${cyan}pwshai doctor${reset}${bgBlack}         - Run complete diagnostics check${reset}`);
+    console.log(`${bgBlack}  ${cyan}pwshai list${reset}${bgBlack}           - Display this interactive cheatsheet${reset}`);
+    console.log(`${bgBlack}  ${cyan}pwshai /<command>${reset}${bgBlack}     - Execute any registered slash shortcut\n${reset}`);
+
+    console.log(`${bgBlack}${bold}${white}[ REGISTERED SLASH COMMANDS ]${reset}`);
+    
+    const categories = {};
     commands.forEach(cmd => {
-        const trigger = (cmd.trigger || '').padEnd(16);
-        console.log(`    ${trigger} : ${cmd.description}`);
+        const cat = cmd.category || 'Uncategorized';
+        if (!categories[cat]) categories[cat] = [];
+        categories[cat].push(cmd);
     });
-    console.log('');
+
+    for (const [category, cmds] of Object.entries(categories)) {
+        console.log(`${bgBlack}  ${dim}-- ${category} --${reset}`);
+        cmds.forEach(cmd => {
+            const trigger = (cmd.trigger || '').padEnd(22);
+            console.log(`${bgBlack}    ${cyan}${trigger}${reset}${bgBlack} : ${dim}${cmd.description}${reset}`);
+        });
+        console.log(`${bgBlack}${reset}`);
+    }
+}
+
+async function pullModel() {
+    const prompts = require('prompts');
+    const { execSync } = require('child_process');
+
+    const models = [
+        { title: 'Gemma 4 E2B', value: 'google/gemma-4-E2B' },
+        { title: 'Qwen 3.8 27B Abliterated', value: 'heterodoxin/qwen-3.8-27b-abliterated' },
+        { title: 'Qwen3-VL 8B GLM-4.7 Flash Heretic', value: 'mradermacher/Qwen3-VL-8B-GLM-4.7-Flash-Heretic-Uncensored-Thinking-GGUF' },
+        { title: 'Ternary Bonsai 8B', value: 'prism-ml/Ternary-Bonsai-8B-gguf' },
+        { title: 'Terminus Qwen3 8B i1', value: 'mradermacher/Terminus-Qwen3-8b-i1-GGUF' }
+    ];
+
+    const response = await prompts({
+        type: 'select',
+        name: 'repo',
+        message: '🧠 Select a local model to download via HuggingFace CLI:',
+        choices: models
+    });
+
+    if (response.repo) {
+        console.log(`\n\x1b[36m🚀 Downloading ${response.repo}...\x1b[0m`);
+        try {
+            // Using spawn via executorLib so it looks pretty
+            if (executorLib && executorLib.executeCommand) {
+                const code = await executorLib.executeCommand('huggingface-cli', ['download', response.repo]);
+                if (code !== 0) throw new Error('Command failed with code ' + code);
+            } else {
+                execSync(`huggingface-cli download ${response.repo}`, { stdio: 'inherit' });
+            }
+        } catch (e) {
+            console.log(`\n\x1b[31m⚠️ Download failed. Ensure huggingface-cli is installed (run /model --install-local).\x1b[0m\n`);
+        }
+    }
+}
+
+async function showConfigWizard() {
+    console.clear();
+    const bgBlack = '\x1b[48;2;0;0;0m';
+    const cyan = '\x1b[36m';
+    const magenta = '\x1b[35m';
+    const white = '\x1b[97m';
+    const bold = '\x1b[1m';
+    const reset = '\x1b[0m';
+    const dim = '\x1b[2m';
+
+    console.log(`\n${bgBlack}${bold}${magenta}┌─── CONFIGURATION & REGISTRY ───────────┐${reset}`);
+    console.log(`${bgBlack}${magenta}│${reset}${bgBlack} ${cyan}Active Settings & Local Models:${reset}`);
+    console.log(`${bgBlack}${magenta}│${reset}${bgBlack} ${reset}`);
+    
+    // Display the full model paths as requested
+    console.log(`${bgBlack}${magenta}│${reset}${bgBlack} ${bold}${white}[ Local Model Repositories ]${reset}`);
+    const models = [
+        { title: 'Gemma 4 E2B', value: 'google/gemma-4-E2B' },
+        { title: 'Qwen 3.8 27B Abliterated', value: 'heterodoxin/qwen-3.8-27b-abliterated' },
+        { title: 'Qwen3-VL 8B GLM-4.7 Flash Heretic', value: 'mradermacher/Qwen3-VL-8B-GLM-4.7-Flash-Heretic-Uncensored-Thinking-GGUF' },
+        { title: 'Ternary Bonsai 8B', value: 'prism-ml/Ternary-Bonsai-8B-gguf' },
+        { title: 'Terminus Qwen3 8B i1', value: 'mradermacher/Terminus-Qwen3-8b-i1-GGUF' }
+    ];
+    
+    models.forEach(m => {
+        console.log(`${bgBlack}${magenta}│${reset}${bgBlack}   * ${cyan}${m.title.padEnd(35)}${reset}${bgBlack} ${dim}(${m.value})${reset}`);
+    });
+    
+    console.log(`${bgBlack}${magenta}│${reset}${bgBlack} ${reset}`);
+    console.log(`${bgBlack}${magenta}│${reset}${bgBlack} ${dim}To manage config visually, edit: ~/.wind-commands.json${reset}`);
+    console.log(`${bgBlack}${bold}${magenta}└────────────────────────────────────────┘${reset}\n`);
+}
+
+async function showInteractiveMenu() {
+    console.clear();
+    const prompts = require('prompts');
+    const commands = loadRegisteredCommands();
+    
+    // Applying Opencode TUI-like prompt options
+    const choices = [
+        { title: '[*] Status & Info', value: 'status', description: 'Show current profile install status' },
+        { title: '[=] Configuration', value: '/config', description: 'View current settings and local models' },
+        { title: '[+] Install Profile', value: 'install', description: 'Configure PSReadLine and slash commands' },
+        { title: '[~] Doctor', value: 'doctor', description: 'Run system diagnostics' },
+        { title: '[>] UI Effects', value: 'effects', description: 'Launch terminal text effects showcase' },
+    ];
+
+    commands.forEach(cmd => {
+        choices.push({
+            title: `[${cmd.category || 'Misc'}] ${cmd.trigger}`,
+            value: cmd.trigger,
+            description: cmd.description
+        });
+    });
+
+    const response = await prompts({
+        type: 'autocomplete',
+        name: 'command',
+        message: 'PWSHAI TERMINAL : Select Command',
+        choices: choices,
+        suggest: (input, choices) => Promise.resolve(choices.filter(i => i.title.toLowerCase().includes(input.toLowerCase()) || i.description.toLowerCase().includes(input.toLowerCase())))
+    });
+
+    if (response.command) {
+        // Mock the rawArgs and run again
+        rawArgs.length = 0;
+        rawArgs.push(...response.command.split(' '));
+        const firstOverride = rawArgs[0].toLowerCase();
+        
+        if (firstOverride === 'status') return status();
+        if (firstOverride === 'install') return install();
+        if (firstOverride === 'doctor') return doctor();
+        if (firstOverride === 'effects') {
+            if (windEffects && windEffects.runWindShowcase) {
+                return await windEffects.runWindShowcase();
+            }
+            return;
+        }
+        if (response.command === '/config') return await showConfigWizard();
+        if (response.command === '/model --pull') return await pullModel();
+
+        const matched = commands.find(
+            c => c.trigger.toLowerCase() === response.command.toLowerCase() ||
+                 (c.aliases && c.aliases.some(a => a.toLowerCase() === response.command.toLowerCase()))
+        );
+
+        if (matched && executorLib && executorLib.executeCommand) {
+            await executorLib.executeCommand(matched.command, matched.args || [], {
+                env: matched.env,
+                cwd: matched.cwd
+            });
+        }
+    }
 }
 
 async function main() {
-    if (rawArgs.length === 0 || ['help', '--help', '-h', 'list', 'ls', '/help', '/list', '/?', '?'].includes(first)) {
+    if (rawArgs.length === 0) {
+        await showInteractiveMenu();
+        return;
+    }
+    
+    if (['help', '--help', '-h', 'list', 'ls', '/help', '/list', '/?', '?'].includes(first)) {
         printHelpMenu();
         return;
     }
@@ -283,6 +470,23 @@ async function main() {
 
     if (first === 'doctor' || first === 'check' || first === '/doctor') {
         doctor();
+        return;
+    }
+
+    if (first === '/config' || first === 'config') {
+        await showConfigWizard();
+        return;
+    }
+
+    // Direct command execution from commands.json
+    const commands = loadRegisteredCommands();
+    let targetInput = rawArgs.join(' ').trim();
+    if (first === 'run') {
+        targetInput = rawArgs.slice(1).join(' ').trim();
+    }
+
+    if (targetInput === '/model --pull' || targetInput === '/pull-model') {
+        await pullModel();
         return;
     }
 
@@ -314,12 +518,6 @@ async function main() {
         }
     }
 
-    // Direct command execution from commands.json
-    const commands = loadRegisteredCommands();
-    let targetInput = rawArgs.join(' ').trim();
-    if (first === 'run') {
-        targetInput = rawArgs.slice(1).join(' ').trim();
-    }
 
     const matched = commands.find(
         c => c.trigger.toLowerCase() === targetInput.toLowerCase() ||

@@ -51,9 +51,33 @@
     {
       "trigger": "/keys",
       "aliases": ["keys", "/ai:keys"],
-      "description": "Manage & test API keys (-stored, -test, -list, -add)",
+      "description": "Manage API keys in cross-platform secure vault",
+      "command": "node",
+      "args": ["bin/keys.js"],
+      "category": "AI & Models"
+    },
+    {
+      "trigger": "/config",
+      "aliases": ["/settings", "config"],
+      "description": "View interactive configuration wizard and loaded local models",
+      "command": "node",
+      "args": ["bin/cli.js", "/config"],
+      "category": "Diagnostics & Help"
+    },
+    {
+      "trigger": "/model --pull",
+      "aliases": ["/model -pull", "/pull-model"],
+      "description": "Interactively select and download HuggingFace local models",
+      "command": "node",
+      "args": ["bin/cli.js", "/model --pull"],
+      "category": "AI & Models"
+    },
+    {
+      "trigger": "/model --install-local",
+      "aliases": ["/model -install", "/install-local", "/install-ai"],
+      "description": "Install local AI management toolchains (llama.cpp, HuggingFace CLI, Ollama)",
       "command": "powershell",
-      "args": ["-NoProfile", "-Command", "Invoke-SlashKeys"],
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts/install_local_ai.ps1"],
       "category": "AI & Models"
     },
     {
@@ -97,19 +121,11 @@
       "category": "Package Management"
     },
     {
-      "trigger": "/sync",
-      "aliases": ["sync", "/asana-sync"],
-      "description": "Run Asana to Supabase sync tool",
+      "trigger": "/prep -vector-extract",
+      "aliases": ["/vector -prep", "/prep"],
+      "description": "Extract markdown, pdfs, txt and convert other files to text",
       "command": "python",
-      "args": ["C:\\Users\\GabeMaher\\main.py"],
-      "category": "Projects"
-    },
-    {
-      "trigger": "/sync -v",
-      "aliases": ["sync -v", "/validate"],
-      "description": "Validate Asana to Supabase connections without writing data",
-      "command": "python",
-      "args": ["C:\\Users\\GabeMaher\\main.py", "--validate"],
+      "args": ["scripts/extractor.py"],
       "category": "Projects"
     },
     {

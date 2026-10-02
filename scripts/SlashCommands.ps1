@@ -1,10 +1,19 @@
-﻿# =============================================================================
+# =============================================================================
 # PowerShell Supercharged Slash Commands, Theme Engine & AI Suite
 # (WindowsPowerShell 5.1 & PowerShell 7+)
 # =============================================================================
 
 # Global state initialization
 $global:AI_ENABLED = $true
+
+# Load Orbital Vault Keys from ~/.hermes/.env
+$envFile = Join-Path $HOME ".hermes\.env"
+if (Test-Path $envFile) {
+    Get-Content $envFile | Where-Object { $_ -match "^([^#=]+)=(.*)$" } | ForEach-Object {
+        [Environment]::SetEnvironmentVariable($matches[1].Trim(), $matches[2].Trim(), "Process")
+    }
+}
+
 if (-not $global:AI_PROVIDER) {
     $global:AI_PROVIDER = if ($env:AI_PROVIDER) { $env:AI_PROVIDER } else { "gemini" }
 }

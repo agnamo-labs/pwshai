@@ -49,7 +49,6 @@ Reload your current session:
 - `/npm [-u]` — NPM manager (`-u` updates all global packages)
 - `/wing [-u]` — Windows winget manager (`-u` upgrades all system packages)
 - `/pip [-u]` — Python pip manager (`-u` upgrades pip & terminaltexteffects)
-- `/sync [-v]` — Asana to Supabase sync runner (`-v` validates connections)
 - `/codexx` — Launch Codex X Shell environment
 - `/eb` — Eternal Buckets shortcut
 
