@@ -942,3 +942,58 @@ function Invoke-SlashHelp {
 Set-Alias -Name /help -Value Invoke-SlashHelp -Option AllScope -ErrorAction SilentlyContinue
 Set-Alias -Name /slash -Value Invoke-SlashHelp -Option AllScope -ErrorAction SilentlyContinue
 Set-Alias -Name /list -Value Invoke-SlashHelp -Option AllScope -ErrorAction SilentlyContinue
+
+# -----------------------------------------------------------------------------
+# /bigfiles - where the disk went, grouped by the folder that owns it
+# -----------------------------------------------------------------------------
+function Invoke-SlashBigfiles {
+    param(
+        [string] $Roots = 'C:\,Z:\',
+        [int] $MinMB = 400,
+        [int] $Top = 20,
+        [switch] $Json
+    )
+
+    # The collector lives in AgnamoSys.ps1; load it lazily so the profile stays cheap
+    # and this command still works when SlashCommands.ps1 was synced on its own.
+    if (-not (Get-Command Get-AgnamoBigFile -ErrorAction SilentlyContinue)) {
+        $sys = Join-Path $PSScriptRoot 'AgnamoSys.ps1'
+        if (Test-Path -LiteralPath $sys) { . $sys }
+    }
+    if (-not (Get-Command Get-AgnamoBigFile -ErrorAction SilentlyContinue)) {
+        Write-Host '[!] AgnamoSys.ps1 not found next to SlashCommands.ps1 - reinstall pwshai.' -ForegroundColor Magenta
+        return
+    }
+
+    $rootList = @($Roots -split '[,;]' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    Write-Host "[SPACE] Files >= $MinMB MB, grouped by grandparent folder (roots: $($rootList -join ' '))" -ForegroundColor Cyan
+    Write-Host '        This walks the whole tree; a full system drive takes a few minutes.' -ForegroundColor DarkGray
+
+    $rows = @(Get-AgnamoBigFile -Root $rootList -MinMB $MinMB -Top $Top)
+    if ($Json) { ($rows | ConvertTo-Json -Depth 6); return }
+    if (-not $rows) {
+        Write-Host "[SPACE] Nothing at or above $MinMB MB." -ForegroundColor Yellow
+        return
+    }
+
+    $rows | ForEach-Object {
+        # Per-child units adapt: 0.0 GB tells you nothing about a 900 MB folder.
+        $kids = (@($_.Children) | ForEach-Object {
+            if ($_.GB -ge 1) { '{0} {1:N1} GB' -f $_.Name, $_.GB } else { '{0} {1:N0} MB' -f $_.Name, $_.MB }
+        }) -join ', '
+        [pscustomobject]@{
+            GB           = $_.GB
+            Files        = $_.Files
+            ParentParent = $_.Path
+            Parents      = $kids
+        }
+    } | Format-Table -AutoSize -Wrap
+
+    $totalMB = ($rows | Measure-Object -Property MB -Sum).Sum
+    $totalText = if ($totalMB -ge 1024) { '{0:N1} GB' -f ($totalMB / 1024) } else { '{0:N0} MB' -f $totalMB }
+    Write-Host ("[SPACE] {0} across {1} folder(s) shown - raise -Top or lower -MinMB to see more." -f $totalText, $rows.Count) -ForegroundColor DarkGray
+}
+Set-Alias -Name /bigfiles -Value Invoke-SlashBigfiles -Option AllScope -ErrorAction SilentlyContinue
+Set-Alias -Name /big -Value Invoke-SlashBigfiles -Option AllScope -ErrorAction SilentlyContinue
+Set-Alias -Name /space -Value Invoke-SlashBigfiles -Option AllScope -ErrorAction SilentlyContinue
+Set-Alias -Name /disk -Value Invoke-SlashBigfiles -Option AllScope -ErrorAction SilentlyContinue

@@ -11,6 +11,10 @@ let configLib = null;
 let executorLib = null;
 let tteBridge = null;
 let doctorLib = null;
+let tailscaleWizard = null;
+
+let profileLib = null;
+try { profileLib = require('../lib/profile'); } catch (e) {}
 
 try {
     windEffects = require('../lib/wind-effects');
@@ -18,6 +22,7 @@ try {
     executorLib = require('../lib/executor');
     tteBridge = require('../lib/tte-bridge');
     doctorLib = require('../lib/doctor');
+    tailscaleWizard = require('../lib/tailscale-wizard');
 } catch (e) {}
 
 const rawArgs = process.argv.slice(2);
@@ -108,6 +113,31 @@ function install() {
         }
     });
 
+    if (profileLib) {
+        const repaired = profileLib.repairProfiles({ write: true });
+        repaired.forEach((row) => {
+            const short = path.basename(row.profile);
+            if (row.status === 'repaired') {
+                console.log(`${bgBlack}  ${cyan}[*]${reset}${bgBlack} Repaired ${row.changed} invalid chord(s) in ${cyan}${short}${reset}${bgBlack} (backup kept)${reset}`);
+            } else if (row.status === 'failed') {
+                console.log(`${bgBlack}  ${magenta}[!]${reset}${bgBlack} Could not repair ${short}: ${row.detail}${reset}`);
+            }
+        });
+        for (const row of profileLib.ensurePSReadLine({ write: true })) {
+            if (row.status === 'installed') {
+                console.log(`${bgBlack}  ${cyan}[*]${reset}${bgBlack} PSReadLine upgraded for ${row.shell} (was ${row.version || 'absent'})${reset}`);
+            } else if (row.status && row.status.startsWith('failed')) {
+                console.log(`${bgBlack}  ${magenta}[!]${reset}${bgBlack} PSReadLine upgrade skipped for ${row.shell}: ${row.version || row.status}${reset}`);
+            }
+        }
+        const predictor = profileLib.ensureCompletionPredictor({ write: true });
+        if (predictor.status === 'present' || predictor.status === 'installed') {
+            console.log(`${bgBlack}  ${cyan}[*]${reset}${bgBlack} CompletionPredictor ${predictor.status}${reset}`);
+        } else if (predictor.status === 'failed') {
+            console.log(`${bgBlack}  ${magenta}[!]${reset}${bgBlack} CompletionPredictor not installed: ${predictor.detail || 'unknown'} (predictions stay history-only)${reset}`);
+        }
+    }
+
     profiles.forEach((profilePath) => {
         let profileContent = '';
         if (fs.existsSync(profilePath)) {
@@ -184,7 +214,7 @@ function install() {
 '    }\n' +
 '} catch {}\n\n' +
 'try {\n' +
-'    Set-PSReadLineKeyHandler -Chord "Ctrl+space" -Description "Multi-Candidate AI Autocomplete" -ScriptBlock {\n' +
+'    Set-PSReadLineKeyHandler -Chord "Ctrl+Spacebar" -Description "Multi-Candidate AI Autocomplete" -ScriptBlock {\n' +
 '        if ($global:AI_ENABLED -eq $false) { return }\n' +
 '        $line = $null; $cursor = 0\n' +
 '        [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)\n' +
@@ -235,6 +265,60 @@ function status() {
         if (idx < profiles.length - 1) console.log(`${bgBlack}${magenta}│${reset}`);
     });
     console.log(`${bgBlack}${bold}${magenta}└───────────────────────────────────────┘${reset}\n`);
+}
+
+// `pwshai repair` — make the PowerShell side healthy again.
+// Dry-run by default? No: repair is idempotent and takes a .bak first, and the
+// alternative (silently dead keybindings) is worse than an edited profile.
+function repair(dryRun) {
+    const bgBlack = '[48;2;0;0;0m';
+    const cyan = '[36m';
+    const magenta = '[35m';
+    const reset = '[0m';
+    console.log(`
+${bgBlack}${cyan}=== PROFILE REPAIR ===${reset}
+`);
+    if (!profileLib) {
+        console.log(`${bgBlack}${magenta}[!]${reset} lib/profile.js unavailable — reinstall pwshai.`);
+        return;
+    }
+    const rows = profileLib.repairProfiles({ write: !dryRun });
+    if (!rows.length) {
+        console.log(`${bgBlack}${magenta}[!]${reset} No PowerShell profiles found for this user.`);
+        return;
+    }
+    for (const row of rows) {
+        const icon = row.status === 'failed' || row.status === 'unreadable' ? `${magenta}[!]` : `${cyan}[*]`;
+        const detail = row.status === 'repaired'
+            ? `${row.changed} chord(s) fixed, backup kept`
+            : row.status === 'would-repair'
+                ? `${row.changed} chord(s) would be fixed (dry run)`
+                : row.status === 'missing'
+                    ? 'no profile file yet'
+                    : row.status;
+        const where = (row.shells || [row.shell || '']).join(' + ').padEnd(34);
+        console.log(`${bgBlack}${icon}${reset} ${bgBlack}${where}${reset} ${bgBlack}${detail}${reset}`);
+    }
+    for (const row of profileLib.ensurePSReadLine({ write: true })) {
+        const detail = row.status === 'ok'
+            ? `PSReadLine ${row.version}`
+            : row.status === 'installed'
+                ? `PSReadLine upgraded (was ${row.version || 'absent'})`
+                : `PSReadLine ${row.version || 'absent'} — ${row.status}`;
+        const icon = row.status === 'ok' || row.status === 'installed' ? `${cyan}[*]` : `${magenta}[!]`;
+        console.log(`${bgBlack}${icon}${reset} ${bgBlack}${String(row.shell).padEnd(34)}${reset} ${bgBlack}${detail}${reset}`);
+    }
+    const predictor = profileLib.ensureCompletionPredictor({ write: true });
+    if (predictor.status === 'present') {
+        console.log(`${bgBlack}${cyan}[*]${reset} ${bgBlack}${'CompletionPredictor'.padEnd(20)}${reset} ${bgBlack}already installed${reset}`);
+    } else if (predictor.status === 'installed') {
+        console.log(`${bgBlack}${cyan}[*]${reset} ${bgBlack}${'CompletionPredictor'.padEnd(20)}${reset} ${bgBlack}installed for the current user${reset}`);
+    } else {
+        console.log(`${bgBlack}${magenta}[!]${reset} ${bgBlack}${'CompletionPredictor'.padEnd(20)}${reset} ${bgBlack}${predictor.detail || predictor.status} — predictions stay history-only${reset}`);
+    }
+    console.log(`
+${bgBlack}${cyan}[=] Open a NEW shell for the profile changes to load.${reset}
+`);
 }
 
 function doctor() {
@@ -296,7 +380,15 @@ function printHelpMenu() {
     console.log(`${bgBlack}  ${cyan}pwshai status${reset}${bgBlack}         - Display active PowerShell profile status${reset}`);
     console.log(`${bgBlack}  ${cyan}pwshai doctor${reset}${bgBlack}         - Run complete diagnostics check${reset}`);
     console.log(`${bgBlack}  ${cyan}pwshai list${reset}${bgBlack}           - Display this interactive cheatsheet${reset}`);
+    console.log(`${bgBlack}  ${cyan}pwshai tailscale${reset}${bgBlack}      - Tailnet control: locate, connect, expose, devices${reset}`);
     console.log(`${bgBlack}  ${cyan}pwshai /<command>${reset}${bgBlack}     - Execute any registered slash shortcut\n${reset}`);
+
+    console.log(`${bgBlack}${bold}${white}[ TAILNET SUBCOMMANDS ]${reset}`);
+    console.log(`${bgBlack}    ${cyan}tailscale detect${reset}${bgBlack}   : search this machine for a tailscale install${reset}`);
+    console.log(`${bgBlack}    ${cyan}tailscale status${reset}${bgBlack}   : list devices and their state${reset}`);
+    console.log(`${bgBlack}    ${cyan}tailscale ping${reset}${bgBlack}     : ping every online device${reset}`);
+    console.log(`${bgBlack}    ${cyan}tailscale expose${reset}${bgBlack}   : serve a directory to the tailnet${reset}`);
+    console.log(`${bgBlack}    ${cyan}tailscale mount${reset}${bgBlack}    : map or unmap the tailnet drive${reset}\n${reset}`);
 
     console.log(`${bgBlack}${bold}${white}[ REGISTERED SLASH COMMANDS ]${reset}`);
     
@@ -397,6 +489,7 @@ async function showInteractiveMenu() {
         { title: '[+] Install Profile', value: 'install', description: 'Configure PSReadLine and slash commands' },
         { title: '[~] Doctor', value: 'doctor', description: 'Run system diagnostics' },
         { title: '[>] UI Effects', value: 'effects', description: 'Launch terminal text effects showcase' },
+        { title: '[~] Tailnet Control', value: 'tailscale', description: 'Locate tailscale, connect, expose dirs, list devices' },
     ];
 
     commands.forEach(cmd => {
@@ -428,6 +521,10 @@ async function showInteractiveMenu() {
             if (windEffects && windEffects.runWindShowcase) {
                 return await windEffects.runWindShowcase();
             }
+            return;
+        }
+        if (firstOverride === 'tailscale') {
+            if (tailscaleWizard) return await tailscaleWizard.runWizard();
             return;
         }
         if (response.command === '/config') return await showConfigWizard();
@@ -473,9 +570,48 @@ async function main() {
         return;
     }
 
+    // Profile health: fixes chord names PSReadLine rejects and offers the
+    // CompletionPredictor module the profile's prediction source expects.
+    if (['repair', 'fix', '/repair', '/fix', 'profiles'].includes(first)) {
+        repair(rawArgs.includes('--dry-run') || rawArgs.includes('-n'));
+        return;
+    }
+
     if (first === '/config' || first === 'config') {
         await showConfigWizard();
         return;
+    }
+
+    // Tailnet control: `pwshai tailscale [wizard|detect|status|ping|expose|mount]`
+    if (['tailscale', 'tailnet', 'ts', '/tailscale', '/ts', '/tailnet'].includes(first)) {
+        if (!tailscaleWizard) {
+            console.error('Tailnet module unavailable (lib/tailscale-wizard.js failed to load).');
+            process.exit(1);
+        }
+        const sub = (rawArgs[1] || '').toLowerCase();
+        const rest = rawArgs.slice(2);
+
+        if (!sub || sub === 'wizard' || sub === 'ui') {
+            await tailscaleWizard.runWizard();
+            return;
+        }
+
+        let code = 0;
+        if (sub === 'detect' || sub === 'find' || sub === 'search') {
+            code = tailscaleWizard.cmdDetect();
+        } else if (sub === 'status' || sub === 'devices' || sub === 'list') {
+            code = tailscaleWizard.cmdStatus();
+        } else if (sub === 'ping') {
+            code = await tailscaleWizard.cmdPing(null, rest);
+        } else if (sub === 'expose' || sub === 'serve') {
+            code = await tailscaleWizard.cmdExpose(null, rest);
+        } else if (sub === 'mount' || sub === 'drive') {
+            code = await tailscaleWizard.cmdMount(null, (rest[0] || '').toLowerCase());
+        } else {
+            printHelpMenu();
+            return;
+        }
+        process.exit(code);
     }
 
     // Direct command execution from commands.json
